@@ -10,7 +10,7 @@ app.get('/',(req,res)=>res.send('here'));
 // app.use(express.static("public"));
   
 app.listen(9999, function() {
-    console.log("Server started on port 3000");
+    console.log("Server started on port 9999");
 });
 
 // sockserver.on('connection', (ws) => {
