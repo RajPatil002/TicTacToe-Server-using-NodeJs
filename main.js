@@ -7,15 +7,25 @@ const app = express();
 
 let server = new Map()
 
-function getRandomPort() {
-    return 9000//(Math.random().toFixed(3) * 1000) + 9000
+function getRandomPort(){
+    let port;
+    do {
+        port = (Math.random().toFixed(3) * 1000) + 9000
+    } while (server.has(port));
+    return port;
 }
 
-app.get('/', (req, res) => {
+// app.get('/port', (req, res) => {
+//     res.send(getRandomPort().toString())
+//     server.set(port.toString(), new WebSocket(port))
+//     console.log(server)
+// });
+
+app.post('/creategamesocket', (req, res) => {
     const port = getRandomPort()
+    server.set(port.toString(), new WebSocket(port.toString()))
     res.send(port.toString())
-    server.set(port.toString(), new WebSocket(port))
-    console.log(server)
+    // console.log(server)
 });
 
 app.post('/portinfo', (req, res) => {

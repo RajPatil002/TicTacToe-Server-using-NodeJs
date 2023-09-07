@@ -34,9 +34,9 @@ class WebSocket {
         this.connected += n
     }
 
-    sendToOtherPlayer(message, id) {
+    sendToOtherPlayer(message, senderid) {
         this.socket.clients.forEach((client) => {
-            if (client.id != id) {
+            if (client.id != senderid) {
                 client.send(message.toString())
             }
         })
@@ -52,4 +52,4 @@ class WebSocket {
 
 new WebSocket(9000)
 
-// module.exports = WebSocket
+module.exports = WebSocket
