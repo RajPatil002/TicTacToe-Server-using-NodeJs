@@ -15,11 +15,6 @@ function getRandomPort(){
     return port;
 }
 
-// app.get('/port', (req, res) => {
-//     res.send(getRandomPort().toString())
-//     server.set(port.toString(), new WebSocket(port))
-//     console.log(server)
-// });
 
 app.post('/creategamesocket', (req, res) => {
     const port = getRandomPort()
@@ -36,12 +31,3 @@ app.listen(9999, function () {
     console.log("Server started on port 9999");
 });
 
-// sockserver.on('connection', (ws) => {
-//     console.log("connected")
-//     ws.send("connected to server")
-//     console.log(sockserver.clients.size)
-//     ws.on('message', function (data) { 
-//         const str = JSON.parse(data)
-//         console.log(str.message.toString())
-//      })
-// })
