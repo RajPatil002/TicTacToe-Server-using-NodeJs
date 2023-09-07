@@ -1,15 +1,28 @@
 
 
-const express = require('express')
-const { WebSocketServer } = require('ws')
-// const sockserver = new WebSocketServer({ port: 9999 })
-  
+const express = require('express');
+const WebSocket = require('./websocket');
+
 const app = express();
-  
-app.get('/',(req,res)=>res.send('here'));
-// app.use(express.static("public"));
-  
-app.listen(9999, function() {
+
+let server = new Map()
+
+function getRandomPort() {
+    return 9000//(Math.random().toFixed(3) * 1000) + 9000
+}
+
+app.get('/', (req, res) => {
+    const port = getRandomPort()
+    res.send(port.toString())
+    server.set(port.toString(), new WebSocket(port))
+    console.log(server)
+});
+
+app.post('/portinfo', (req, res) => {
+    res.send(server.get(req.headers.port).socketInfo())
+});
+
+app.listen(9999, function () {
     console.log("Server started on port 9999");
 });
 
@@ -22,9 +35,3 @@ app.listen(9999, function() {
 //         console.log(str.message.toString())
 //      })
 // })
-
-// const web = express().use((req,res)=>{
-//     res.send({message:"hi as"})
-// nmap -p 9999 103.80.118.54
-
-// }).listen(5555,()=>console.log("asdfghjkl") );
