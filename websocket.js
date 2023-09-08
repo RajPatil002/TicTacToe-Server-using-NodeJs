@@ -8,6 +8,7 @@ class WebSocket {
         this.clients = new Map()
         this.connected = 0;
         this.socket = new WebSocketServer({ port: port })
+        console.log("create socket at " + port)
         this.socket.on("connection", (ws) => {
             if (this.connected > 1) {
                 ws.close(1000, 'limit')
@@ -50,6 +51,5 @@ class WebSocket {
     }
 }
 
-new WebSocket(9000)
 
 module.exports = WebSocket
