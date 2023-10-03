@@ -5,23 +5,48 @@ const WebSocket = require('./websocket');
 
 const app = express();
 
-let server = new Map()
+var server = new Map()
 
-function getRandomPort(){
+function getRandomPort() {
     let port;
     do {
         port = (Math.random().toFixed(3) * 1000) + 9000
-    } while (server.has(port));
-    return port;
+    } while (9999 == port || server.has(port));
+    return port.toString();
 }
 
 
 app.post('/creategamesocket', (req, res) => {
+    console.log("Here")
     const port = getRandomPort()
-    server.set(port.toString(), new WebSocket(port.toString()))
-    res.send(port.toString())
-    // console.log(server)
+    const createdbyid = (Math.random().toFixed(3) * 1000).toString()
+    console.log(port, createdbyid)
+
+    // create socket to connect
+    server.set(port, new WebSocket(port, createdbyid))
+
+    server.get('1000').socket.addListener('close', () => {
+        server.delete('1000')
+        console.log("asatroyed")
+        console.log(server)
+    })
+
+    res.send({ port: port.toString(), createdbyid: createdbyid })
 });
+
+
+app.post('/joingamesocket', (req, res) => {
+    console.log("joining")
+    const port = req.headers.port
+    console.log(port)
+    if (server.has(port)) {
+        res.send({ port: port.toString() })
+    } else {
+        res.send({ port: undefined })
+    }
+
+});
+
 
 app.post('/portinfo', (req, res) => {
     res.send(server.get(req.headers.port).socketInfo())
@@ -31,3 +56,15 @@ app.listen(9999, function () {
     console.log("Server started on port 9999");
 });
 
+
+server.set('1000', new WebSocket('1000', '123'))
+
+// console.log(server.get('1000').socket)
+// server['1000'].
+server.get('1000').socket.addListener('close', () => {
+    server.delete('1000')
+    console.log("asatroyed")
+    console.log(server)
+})
+
+// console.log(server)
