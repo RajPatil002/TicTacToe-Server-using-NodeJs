@@ -1,7 +1,6 @@
 
 const { WebSocketServer } = require('ws')
 const Player = require('./player')
-// const { Player } = require('./player')
 
 
 class WebSocket {
@@ -10,10 +9,7 @@ class WebSocket {
         this.createdbyid = createdbyid
         this.player1 = new Player()
         this.player2 = new Player()
-        // this.clients = new Map([
-        //     ['p1', undefined],
-        //     ['p2', undefined]
-        // ])
+        this.turnid = undefined
         this.connected = 0;
         this.markers = []
         this.socket = new WebSocketServer({ port: port })
@@ -27,12 +23,12 @@ class WebSocket {
                 console.log(this.connected + "Exit")
                 this.socket.close()
             }
-        }, 1200000)
-        // console.log(this.sockettimer._idleTimeout)
+        }, 120000)
 
         this.socket.on("connection", (ws) => {
 
             if (this.connected > 1) {
+                console.log('try')
                 ws.close(1000, 'limit')
             } else {
 
@@ -41,8 +37,7 @@ class WebSocket {
                     ws.marker = this.getMarker()
                     console.log(this.markers, ws.marker)
                     this.player1.setPlayer(ws)
-                }
-                else {
+                } else {
                     ws.id = 2
                     ws.marker = this.getMarker()
                     console.log(this.markers, ws.marker)
@@ -55,9 +50,13 @@ class WebSocket {
                 if (this.connected == 2) {
                     this.sendStatusOfPlayers()
                 }
+
+
                 ws.on('message', (message) => {
                     const data = JSON.parse(message)
-                    if (data.status != undefined) {
+                    console.log(data)
+                    if (data.status) {
+                        this.turnid = undefined
                         console.log(data.status)
                         if (ws.id == 1) {
                             this.player1.setReady(data.status.ready)
@@ -65,21 +64,27 @@ class WebSocket {
                             this.player2.setReady(data.status.ready)
                         }
                         this.sendStatusOfPlayers()
+                        if (this.turnid == undefined && this.player1.ready == true && this.player2.ready == true) {
+                            this.sendStarting()
+                        }
                     }
-                    if (data.move != undefined) {
-                        this.sendToOtherPlayer(message, ws.id)
+                    else if (data.move) {
+                        this.sendMoveToOpponent(data, ws.id)
                     }
                 })
+
+
                 ws.on('close', async () => {
                     this.updateClientsCount(-1)
                     if (ws.id == 1) {
+                        this.removeMarker(this.player1.marker)
                         this.player1.disconnect()
                     }
                     else {
+                        this.removeMarker(this.player2.marker)
                         this.player2.disconnect()
                     }
                     this.sendStatusOfPlayers()
-                    this.removeMarker(this.player1.marker)
                     console.log(this.markers)
                 })
                 this.updateClientsCount(1)
@@ -88,17 +93,14 @@ class WebSocket {
     }
 
 
-    async removeMarker(marker) {
-        // this.clients.get(player).status.connected = false
+    removeMarker(marker) {
         this.markers = this.markers.filter((value) => value != marker)
-
-        // this.clients.delete(player)
     }
 
     async sendStatusOfPlayers() {
         this.socket.clients.forEach((client) => {
             client.send(JSON.stringify({
-                status: client.id == 1
+                players: client.id == 1
                     ? {
                         opponent: this.player2.playerStatus(),
                         you: this.player1.playerStatus()
@@ -106,6 +108,30 @@ class WebSocket {
                         you: this.player2.playerStatus(),
                         opponent: this.player1.playerStatus()
                     }
+            }))
+        })
+    }
+
+    changeTurn(lastturnid) {
+        this.turnid = lastturnid == 1 ? 2 : 1
+    }
+
+    sendTurn() {
+        this.socket.clients.forEach((client) => {
+            client.send(JSON.stringify({
+                turn: this.turnid == client.id
+            }))
+        })
+
+    }
+
+    sendStarting() {
+        this.socket.clients.forEach((client) => {
+            console.log(client.marker)
+            this.turnid = client.marker == 'x' ? client.id : undefined
+            client.send(JSON.stringify({
+                start: true,
+                turn: client.marker == 'x',
             }))
         })
     }
@@ -122,12 +148,13 @@ class WebSocket {
         }
     }
 
-    sendToOtherPlayer(message, senderid) {
+    sendMoveToOpponent(move, senderid) {
+        this.changeTurn(senderid)
         this.socket.clients.forEach((client) => {
-            if (client.id != senderid) {
-                console.log("Other")
-                client.send(message.toString())
-            }
+            client.send(JSON.stringify({
+                ...move,
+                turn: this.turnid == client.id
+            }))
         })
     }
 

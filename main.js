@@ -25,8 +25,9 @@ app.post('/creategamesocket', (req, res) => {
     // create socket to connect
     server.set(port, new WebSocket(port, createdbyid))
 
-    server.get('1000').socket.addListener('close', () => {
-        server.delete('1000')
+    console.log(server)
+    server.get(port).socket.addListener('close', () => {
+        server.delete(port)
         console.log("asatroyed")
         console.log(server)
     })
@@ -55,16 +56,3 @@ app.post('/portinfo', (req, res) => {
 app.listen(9999, function () {
     console.log("Server started on port 9999");
 });
-
-
-server.set('1000', new WebSocket('1000', '123'))
-
-// console.log(server.get('1000').socket)
-// server['1000'].
-server.get('1000').socket.addListener('close', () => {
-    server.delete('1000')
-    console.log("asatroyed")
-    console.log(server)
-})
-
-// console.log(server)
