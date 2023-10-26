@@ -13,7 +13,8 @@ class WebSocket {
         this.connected = 0;
         this.markers = []
         this.socket = new WebSocketServer({ port: port })
-        console.log("created socket at " + port)
+        console.log("Game created at " + port)
+        this.socketjointimer = undefined
 
 
         this.sockettimer = setTimeout(() => {
@@ -23,28 +24,29 @@ class WebSocket {
                 console.log(this.connected + "Exit")
                 this.socket.close()
             }
-        }, 120000)
+        }, 180000)
 
-        this.socket.on("connection", (ws) => {
+        this.socket.on("connection", (client) => {
 
             if (this.connected > 1) {
                 console.log('try')
-                ws.close(1000, 'limit')
+                client.close(1000, 'limit')
             } else {
 
                 if (this.player1.client == undefined) {
-                    ws.id = 1
-                    ws.marker = this.getMarker()
-                    console.log(this.markers, ws.marker)
-                    this.player1.setPlayer(ws)
+                    client.id = 1
+                    client.marker = this.getMarker()
+                    console.log(this.markers, client.marker)
+                    this.player1.setPlayer(client)
                 } else {
-                    ws.id = 2
-                    ws.marker = this.getMarker()
-                    console.log(this.markers, ws.marker)
+                    client.id = 2
+                    client.marker = this.getMarker()
+                    console.log(this.markers, client.marker)
 
-                    this.player2.setPlayer(ws)
+                    this.player2.setPlayer(client)
                 }
 
+                this.startSocketJoinTimer()
                 this.sendStatusOfPlayers()
 
                 if (this.connected == 2) {
@@ -52,13 +54,13 @@ class WebSocket {
                 }
 
 
-                ws.on('message', (message) => {
+                client.on('message', (message) => {
                     const data = JSON.parse(message)
                     console.log(data)
                     if (data.status) {
                         this.turnid = undefined
                         console.log(data.status)
-                        if (ws.id == 1) {
+                        if (client.id == 1) {
                             this.player1.setReady(data.status.ready)
                         } else {
                             this.player2.setReady(data.status.ready)
@@ -69,14 +71,14 @@ class WebSocket {
                         }
                     }
                     else if (data.move) {
-                        this.sendMoveToOpponent(data, ws.id)
+                        this.sendMoveToOpponent(data, client.id)
                     }
                 })
 
 
-                ws.on('close', async () => {
+                client.on('close', async () => {
                     this.updateClientsCount(-1)
-                    if (ws.id == 1) {
+                    if (client.id == 1) {
                         this.removeMarker(this.player1.marker)
                         this.player1.disconnect()
                     }
@@ -90,6 +92,21 @@ class WebSocket {
                 this.updateClientsCount(1)
             }
         })
+    }
+
+
+    async startSocketJoinTimer() {
+        await this.socket.clients.forEach(async (client) => {
+            await client.send(JSON.stringify({ jointimestart: true, jointime: 12 }))
+        })
+        this.socketjointimer = setTimeout(() => {
+            console.log(this.connected)
+            if (this.connected < 2) {
+                this.socket.clients.forEach((client) => client.close())
+                console.log(this.connected + "Exit")
+                this.socket.close()
+            }
+        }, 120000)
     }
 
 
@@ -140,11 +157,17 @@ class WebSocket {
         if (this.connected + n == 0) {
             console.log("closed")
             this.socket.close()
+        } else if (this.connected + n == 1) {
+            this.startSocketJoinTimer()
         }
         this.connected += n
         if (this.connected == 2) {
             console.log("Timer Distroyed")
             clearTimeout(this.sockettimer)
+            clearTimeout(this.socketjointimer)
+            this.socket.clients.forEach(async (client) => {
+                await client.send(JSON.stringify({ jointimestart: false, jointime: undefined }))
+            })
         }
     }
 

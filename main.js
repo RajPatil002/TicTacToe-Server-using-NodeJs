@@ -10,7 +10,7 @@ var server = new Map()
 function getRandomPort() {
     let port;
     do {
-        port = (Math.random().toFixed(3) * 1000) + 9000
+        port = (Math.random().toFixed(3) * 1000) + 8000
     } while (9999 == port || server.has(port));
     return port.toString();
 }
@@ -28,7 +28,7 @@ app.post('/creategamesocket', (req, res) => {
     console.log(server)
     server.get(port).socket.addListener('close', () => {
         server.delete(port)
-        console.log("asatroyed")
+        console.log("{port}")
         console.log(server)
     })
 
@@ -50,7 +50,19 @@ app.post('/joingamesocket', (req, res) => {
 
 
 app.post('/portinfo', (req, res) => {
-    res.send(server.get(req.headers.port).socketInfo())
+    const port = (server.get(req.headers.port))
+    if (port) {
+        const info = port.socketInfo()
+        console.log(info)
+        res.send(info)
+    } else {
+        console.log(port)
+        res.send({
+            'port': undefined,
+            'connected': 0,
+            'sockettime': 0
+        })
+    }
 });
 
 app.listen(9999, function () {
