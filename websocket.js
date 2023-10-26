@@ -96,8 +96,9 @@ class WebSocket {
 
 
     async startSocketJoinTimer() {
+        const time = 120
         await this.socket.clients.forEach(async (client) => {
-            await client.send(JSON.stringify({ jointimestart: true, jointime: 12 }))
+            await client.send(JSON.stringify({ jointimestart: true, jointime: time }))
         })
         this.socketjointimer = setTimeout(() => {
             console.log(this.connected)
@@ -106,7 +107,7 @@ class WebSocket {
                 console.log(this.connected + "Exit")
                 this.socket.close()
             }
-        }, 120000)
+        }, (time + 10) * 1000)
     }
 
 
