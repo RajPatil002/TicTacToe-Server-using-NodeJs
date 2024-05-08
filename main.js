@@ -25,11 +25,11 @@ app.post('/creategamesocket', (req, res) => {
     // create socket to connect
     server.set(port, new WebSocket(port, createdbyid))
 
-    console.log(server)
+    console.log(server.keys())
     server.get(port).socket.addListener('close', () => {
         server.delete(port)
         console.log("{port}")
-        console.log(server)
+        console.log(server.keys())
     })
 
     res.send({ port: port.toString(), createdbyid: createdbyid })
