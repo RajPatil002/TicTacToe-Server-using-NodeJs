@@ -15,6 +15,9 @@ function getRandomPort() {
     return port.toString();
 }
 
+app.get('/', (_, res) => {
+    res.send("HI")
+})
 
 app.post('/creategamesocket', (req, res) => {
     console.log("Here")
