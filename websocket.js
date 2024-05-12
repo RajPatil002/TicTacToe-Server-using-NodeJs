@@ -16,7 +16,7 @@ class WebSocket {
         console.log("Game created at " + port)
         this.socketjointimer = undefined
 
-
+        this.startTimeMS = (new Date()).getTime()
         this.sockettimer = setTimeout(() => {
             console.log(this.connected)
             if (this.connected < 2 && createdbyid != 0) {
@@ -28,11 +28,15 @@ class WebSocket {
 
         this.socket.on("connection", (client) => {
 
+            // 3rd player trying to connect
             if (this.connected > 1) {
-                console.log('try')
+                console.log('Third wheel')
                 client.close(1000, 'limit')
             } else {
 
+                this.updateClientsCount(1)
+
+                // Assign players
                 if (this.player1.client == undefined) {
                     client.id = 1
                     client.marker = this.getMarker()
@@ -42,18 +46,14 @@ class WebSocket {
                     client.id = 2
                     client.marker = this.getMarker()
                     console.log(this.markers, client.marker)
-
                     this.player2.setPlayer(client)
                 }
 
-                this.startSocketJoinTimer()
+                // Player status on connect
                 this.sendStatusOfPlayers()
 
-                if (this.connected == 2) {
-                    this.sendStatusOfPlayers()
-                }
 
-
+                // On message from players
                 client.on('message', (message) => {
                     const data = JSON.parse(message)
                     console.log(data)
@@ -76,6 +76,7 @@ class WebSocket {
                 })
 
 
+                // On player leave
                 client.on('close', async () => {
                     this.updateClientsCount(-1)
                     if (client.id == 1) {
@@ -89,25 +90,46 @@ class WebSocket {
                     this.sendStatusOfPlayers()
                     console.log(this.markers)
                 })
-                this.updateClientsCount(1)
+
             }
         })
     }
 
 
+    manageSocketTimer() {
+        if (this.connected == 1) {
+            // Start timer after first join
+            this.startSocketJoinTimer()
+        } else if (this.connected == 2) {
+            // Stop timer after second join
+            this.stopSocketJoinTimer()
+        }
+    }
+
+
     async startSocketJoinTimer() {
         const time = 120
-        await this.socket.clients.forEach(async (client) => {
-            await client.send(JSON.stringify({ jointimestart: true, jointime: time }))
+        this.socket.clients.forEach(async (client) => {
+            client.send(JSON.stringify({ jointimestart: true, jointime: time }))
         })
         this.socketjointimer = setTimeout(() => {
             console.log(this.connected)
             if (this.connected < 2) {
                 this.socket.clients.forEach((client) => client.close())
                 console.log(this.connected + "Exit")
-                this.socket.close()
+                // this.socket.close()
             }
         }, (time + 10) * 1000)
+    }
+
+    async stopSocketJoinTimer() {
+        console.log("Timer Distroyed")
+        clearTimeout(this.sockettimer)
+        clearTimeout(this.socketjointimer)
+        this.socket.clients.forEach(async (client) => {
+            await client.send(JSON.stringify({ jointimestart: false, jointime: undefined }))
+        })
+
     }
 
 
@@ -155,21 +177,16 @@ class WebSocket {
     }
 
     updateClientsCount(n) {
-        if (this.connected + n == 0) {
-            console.log("closed")
-            this.socket.close()
-        } else if (this.connected + n == 1) {
-            this.startSocketJoinTimer()
-        }
         this.connected += n
-        if (this.connected == 2) {
-            console.log("Timer Distroyed")
-            clearTimeout(this.sockettimer)
-            clearTimeout(this.socketjointimer)
-            this.socket.clients.forEach(async (client) => {
-                await client.send(JSON.stringify({ jointimestart: false, jointime: undefined }))
-            })
-        }
+        // if (this.connected == 0) {
+        //     // console.log("Connected Players = " + this.connected)
+        //     // this.socket.close()
+        // } 
+        // else if (this.connected == 1) {
+        //     this.startSocketJoinTimer()
+        // }
+        this.manageSocketTimer()
+        console.log("Connected Players = " + this.connected)
     }
 
     sendMoveToOpponent(move, senderid) {
@@ -187,7 +204,8 @@ class WebSocket {
         return {
             'port': this.port,
             'connected': this.connected,
-            'sockettime': this.sockettimer._idleTimeout
+            'sockettime': this.sockettimer._idleTimeout,
+            'remaining': (this.sockettimer._idleTimeout) - ((new Date()).getTime() - this.startTimeMS)
             // 'createdby': this.owner != undefined ? this.owner.name : ''
         }
     }

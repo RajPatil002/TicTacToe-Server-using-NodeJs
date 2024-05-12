@@ -73,4 +73,4 @@ app.listen(9999, function () {
     console.log("Server started on port 9999");
 });
 
-new WebSocket(1000, 0)
+server.set("1000", new WebSocket(1000, 0))
