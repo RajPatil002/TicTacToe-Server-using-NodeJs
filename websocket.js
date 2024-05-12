@@ -19,7 +19,7 @@ class WebSocket {
 
         this.sockettimer = setTimeout(() => {
             console.log(this.connected)
-            if (this.connected < 2) {
+            if (this.connected < 2 && createdbyid != 0) {
                 this.socket.clients.forEach((client) => client.close())
                 console.log(this.connected + "Exit")
                 this.socket.close()

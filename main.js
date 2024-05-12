@@ -16,6 +16,10 @@ function getRandomPort() {
 }
 
 
+app.get('/', (q, s) => {
+    s.send("Hi from SERVER")
+})
+
 app.post('/creategamesocket', (req, res) => {
     console.log("Here")
     const port = getRandomPort()
@@ -68,3 +72,5 @@ app.post('/portinfo', (req, res) => {
 app.listen(9999, function () {
     console.log("Server started on port 9999");
 });
+
+new WebSocket(1000, 0)
