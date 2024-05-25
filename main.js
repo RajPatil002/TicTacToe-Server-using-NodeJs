@@ -4,6 +4,7 @@ const express = require('express');
 const WebSocket = require('./websocket');
 
 const app = express();
+app.use(express.json())
 
 var server = new Map()
 
@@ -40,21 +41,10 @@ app.post('/creategamesocket', (req, res) => {
 });
 
 
-app.post('/joingamesocket', (req, res) => {
-    console.log("joining")
-    const port = req.headers.port
-    console.log(port)
-    if (server.has(port)) {
-        res.send({ port: port.toString() })
-    } else {
-        res.send({ port: undefined })
-    }
-
-});
-
 
 app.post('/portinfo', (req, res) => {
-    const port = (server.get(req.headers.port))
+    console.log(req.body);
+    const port = (server.get(req.body.port))
     if (port) {
         const info = port.socketInfo()
         console.log(info)
