@@ -4,6 +4,7 @@ const express = require('express');
 const WebSocket = require('./websocket');
 
 const app = express();
+const port = process.env.PORT || 9999;
 
 var server = new Map()
 
@@ -68,6 +69,6 @@ app.post('/portinfo', (req, res) => {
     }
 });
 
-app.listen(9999, function () {
-    console.log("Server started on port 9999");
+app.listen(port, function () {
+    console.log("Server started on port ",port);
 });
